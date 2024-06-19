@@ -7,6 +7,8 @@ from collections import namedtuple
 from multiprocessing import cpu_count
 
 import torch
+import torchvision
+import torchvision.transforms as transforms
 from torch import nn, einsum
 import torch.nn.functional as F
 from torch.nn import Module, ModuleList
@@ -919,11 +921,14 @@ class Trainer:
 
         # dataset and dataloader
 
-        self.ds = Dataset(folder, self.image_size, augment_horizontal_flip = augment_horizontal_flip, convert_image_to = convert_image_to)
-
+        #self.ds = Dataset(folder, self.image_size, augment_horizontal_flip = augment_horizontal_flip, convert_image_to = convert_image_to)
+        transform = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        self.ds = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform);
+        print(len(self.ds))
         assert len(self.ds) >= 100, 'you should have at least 100 images in your folder. at least 10k images recommended'
 
-        dl = DataLoader(self.ds, batch_size = train_batch_size, shuffle = True, pin_memory = True, num_workers = cpu_count())
+        dl = DataLoader(self.ds, batch_size = train_batch_size, shuffle = True, num_workers = 2, persistent_workers=True)
 
         dl = self.accelerator.prepare(dl)
         self.dl = cycle(dl)
@@ -1027,8 +1032,8 @@ class Trainer:
                 total_loss = 0.
 
                 for _ in range(self.gradient_accumulate_every):
-                    data = next(self.dl).to(device)
-
+                    data, labels = next(self.dl)
+                    data.to(device)
                     with self.accelerator.autocast():
                         loss = self.model(data)
                         loss = loss / self.gradient_accumulate_every

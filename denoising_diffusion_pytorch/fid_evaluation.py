@@ -72,7 +72,7 @@ class FIDEvaluation:
             )
             for _ in tqdm(range(num_batches)):
                 try:
-                    real_samples = next(self.dl)
+                    real_samples, labels = next(self.dl)
                 except StopIteration:
                     break
                 real_samples = real_samples.to(self.device)
