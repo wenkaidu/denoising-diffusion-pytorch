@@ -15,6 +15,7 @@ diffusion = GaussianDiffusion(
   model,
   image_size = 32,
   timesteps = 1000,   # number of steps
+  sampling_timesteps = 250    # number of sampling timesteps (using ddim for faster inference [see citation for ddim paper])
 )
 
 trainer = Trainer(
